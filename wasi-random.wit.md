@@ -9,8 +9,10 @@ Windows.
 ```wit
 /// Return `len` random bytes.
 ///
-/// This function must produce data from an adaquately seeded CSPRNG, so it
-/// must not block, and the returned data is always unpredictable.
+/// This function must produce data from an adaquately seeded
+/// cryptographically-secure pseudo-random number generator (CSPRNG), so it
+/// must not block, from the perspective of the calling program, and the
+/// returned data is always unpredictable.
 ///
 /// Deterministic environments must omit this function, rather than
 /// implementing it with deterministic data.
@@ -21,26 +23,23 @@ get-random-bytes: func(len: u32) -> list<u8>
 ```wit
 /// Return a random `u64` value.
 ///
-/// This function must produce data from an adaquately seeded CSPRNG, so it
-/// must not block, and the returned data is always unpredictable.
-///
-/// Deterministic environments must omit this function, rather than
-/// implementing it with deterministic data.
+/// This function returns the same type of random data as `get-random-bytes`,
+/// represented as a `u64`.
 get-random-u64: func() -> u64
 ```
 
 ## `insecure-random`
 ```wit
-/// A value containing 128 random bits.
+/// Return a value containing 128 random bits.
 ///
-/// This is a value import, which means it only provides one value, rather
-/// than being a function that could be called multiple times. This is intented
-/// to be used by source languages to initialize hash-maps without needing the
-/// full `getrandom` API.
+/// In the future, this will likely be replaced by a value import, to prevent
+/// it from being called multiple times and potentially used for purposes
+/// other than DoS protection.
 ///
-/// This value is not required to be computed from a CSPRNG, and may even be
-/// entirely deterministic. Host implementatations are encouraged to provide
-/// random values to any program exposed to attacker-controlled content, to
-/// enable DoS protection built into many languages' hash-map implementations.
-insecure-random: tuple<u64, u64>
+/// The returned value is not required to be computed from a CSPRNG, and may 
+/// even be entirely deterministic. Host implementatations are encouraged to 
+/// provide random values to any program exposed to attacker-controlled 
+/// content, to enable DoS protection built into many languages' hash-map 
+/// implementations.
+insecure-random: func() -> tuple<u64, u64>
 ```
