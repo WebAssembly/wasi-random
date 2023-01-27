@@ -86,46 +86,36 @@ used for debugging, and not production use.
 
 ### API walk-through
 
-#### Main API: getting random bytes
+#### Main API: getting cryptographically-secure pseudo-random bytes
 
-Return an list of random bytes:
-
-```wit
-get-random-bytes: func(len: u32) -> list<u8>
-```
+Return a list of cryptographically-secure pseudo-random bytes:
 
 ```rust=
-    let len: u32 = how_many_bytes_you_want();
+    let len: u32 = your_own_code_to_decide_how_many_bytes_you_want();
 
     let bytes: Vec<u8> = get_random_bytes(len);
 ```
 
-#### Main API: getting random bytes faster
+#### Main API: getting cryptographically-secure pseudo-random bytes faster
 
-Return a random u64:
-
-```wit
-get-random-u64: func() -> u64
-```
+Sometimes the bindings for `list<u8>` can have some overhead, so
+another function is available which returns the same data but as a
+`u64`:
 
 ```rust=
     let data: u64 = get_random_u64();
 ```
 
-#### Hash-map DoS protection
+#### Insecure API: Hash-map DoS protection
 
 Return a pair of u64's that can be used to initialize a hash implementation:
-
-```wit=
-insecure-random: tuple<u64, u64>
-```
 
 ```rust=
     let init: (u64, u64) = insecure_random();
 
     let combined: u128 = init.0 as u128 | (init.1 as u128 << 64);
 
-    initialize_hash_map(combined);
+    your_own_code_to_initialize_hash_map(combined);
 ```
 
 ### Detailed design discussion
