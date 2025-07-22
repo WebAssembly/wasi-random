@@ -1,0 +1,33 @@
+name: Validate 0.3.0 WIT Definitions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'wit-0.3.0-draft/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'wit-0.3.0-draft/**'
+
+jobs:
+  abi-up-to-date:
+    name: Check 0.3.0 ABI files are up-to-date
+    runs-on: ubuntu-latest
+    steps:
+    # v4.2.2
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    
+    - name: Install wit-deps
+      run: |
+        curl -Lo 'wit-deps' https://github.com/bytecodealliance/wit-deps/releases/download/v0.3.5/wit-deps-x86_64-unknown-linux-musl
+        chmod +x wit-deps
+    
+    - name: Ensure wit-0.3.0-draft files are valid
+      run: ../wit-deps check
+      working-directory: wit-0.3.0-draft
+      
+    - uses: WebAssembly/wit-abi-up-to-date@v24
+      with:
+        all-features: 'true'
+        directory: 'wit-0.3.0-draft'

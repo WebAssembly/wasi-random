@@ -1,0 +1,76 @@
+name: Publish 0.3.0 WIT Definitions
+
+on:
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      packages: write
+      contents: write
+
+    steps:
+      # Checkout the repo and install dependencies
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@8aac5aa2bf0dfaa2863eccad9f43c68fe40e5ec8 # v1.14.1
+        
+      - name: Install wkg
+        shell: bash
+        run: cargo binstall wkg
+        
+      - name: Install cosign
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
+
+      - name: Set version with collision handling
+        id: version
+        run: |
+          DATE=$(date +'%Y-%m-%d')
+          BASE_VERSION="v0.3.0-rc-${DATE}"
+          COUNTER=1
+          VERSION="${BASE_VERSION}"
+          
+          # Check if the tag already exists
+          while git ls-remote --tags origin | grep -q "refs/tags/${VERSION}$"; do
+            VERSION="${BASE_VERSION}-${COUNTER}"
+            COUNTER=$((COUNTER + 1))
+          done
+          
+          echo "value=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Tag the commit with version
+        run: |
+          git tag "${{ steps.version.outputs.value }}"
+          git push origin "${{ steps.version.outputs.value }}"
+
+      - name: Login to the GitHub registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.ORG_PAT }}
+      
+      - name: Build
+        shell: bash
+        run: wkg wit build -o "random-0.3.0.wasm" --wit-dir wit-0.3.0-draft
+
+      # Upload the Wasm binary to the GitHub registry
+      - name: Publish to GitHub Container Registry
+        id: publish
+        uses: bytecodealliance/wkg-github-action@v5
+        with:
+            oci-reference-without-tag: "ghcr.io/webassembly/wasi/random"
+            file: "random-0.3.0.wasm"
+            description: "A WASI API for obtaining pseudo-random data."
+            source: 'https://github.com/webassembly/wasi'
+            homepage: 'https://wasi.dev'
+            version: ${{ steps.version.outputs.value }}
+            licenses: 'Apache-2.0 WITH LLVM-exception'
+
+      # Sign the output component
+      - name: Sign the wasm component
+        run: cosign sign --yes ghcr.io/webassembly/wasi/random-0.3.0@${{ steps.publish.outputs.digest }}

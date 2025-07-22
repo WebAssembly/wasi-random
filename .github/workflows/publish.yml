@@ -4,7 +4,7 @@ name: Publish a Wasm Component package to GitHub Artifacts
 on:
   push:
     tags:
-      - v*
+      - v0.2*
   workflow_dispatch:
 
 env:
@@ -23,12 +23,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@v1.10.15
+        uses: cargo-bins/cargo-binstall@8aac5aa2bf0dfaa2863eccad9f43c68fe40e5ec8 # v1.14.1
       - name: Install wkg
         shell: bash
         run: cargo binstall wkg
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.7.0
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
  
       # To version our image we want to obtain the version from the tag
       - name: Get version
@@ -41,7 +41,7 @@ jobs:
       
       # To upload our image to the GitHub registry, we first have to login
       - name: Login to the GitHub registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
